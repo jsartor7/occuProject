@@ -41,7 +41,7 @@ function getStatusData()
         	updateStatusDivElement(this.responseText);
            	}
         	};
-       	xmlhttp.open("GET", "../grabStatusData.php", true);
+       	xmlhttp.open("GET", "../php/grabStatusData.php", true);
         xmlhttp.send();
     
 }

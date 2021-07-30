@@ -1,6 +1,6 @@
 <?php
 
-$filestr="data/page1data/statuses.txt";
+$filestr="../data/page1data/statuses.txt";
  
 $myfile = fopen($filestr, "r") or die("can't open ".$filestr);
 while(!feof($myfile)) 
