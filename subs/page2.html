@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+
+<title>Page 2</title>
+<link rel = "stylesheet" type = "text/css" href = "theme.css"/>
+
+<body>
+    
+<h1>Search and CRUD</h1>
+
+<div> 
+<button type="button" onclick="tableManager.addNewRow()"> new item </button>
+<button type="button" onclick="tableManager.deleteSelected()"> delete selected </button>
+<button type="button" onclick="tableManager.copySelected()"> copy selected </button>
+<button type="button" onclick="tableViewer.search()"> search </button>
+
+<!-- todo: fix this button-->
+<button type="button" onclick="alert('Hello world!')"> clear compares </button>
+</div>
+<br>
+
+<!-- this is our table! -->
+<table id="crudTable">
+</table> 
+
+<!-- the script that inits table and grabs server data  -->
+<script type="text/javascript" src="../js/crudTableDataManager.js"> </script>
+<script type="text/javascript" src="../js/crudTableViewer.js"> </script>
+<script type="text/javascript" src="../js/crudTable.js"> </script>
+
+</body>
+</html>
