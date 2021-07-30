@@ -13,6 +13,7 @@ $text = "";
 
 foreach($r as $n) {
 	$text.=$n;
+    //todo: prevent adding the separator after last element 
 	$text.="|";
 }
 

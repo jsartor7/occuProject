@@ -18,11 +18,11 @@ function updateStatusDivElement(statusData)
         status = statusArray[i];
         if (status.length>1)
         {
-            html += "<tr><th>"
+            html += "<tr><td>"
             html += i+1
-            html += "</th><th>"
+            html += "</td><td>"
             html += statusArray[i];
-            html += "</th></tr>"
+            html += "</td></tr>"
         }
     }    
     html += "</table></div>"
