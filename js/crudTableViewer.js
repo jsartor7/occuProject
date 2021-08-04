@@ -1,10 +1,10 @@
 
 class crudTableViewer{
     constructor(tableData) {
-        this.table = document.querySelector("table");
+        this.table = document.getElementById("crudTable");
         this.headers = 
         this.tableData = tableData;
-        this.headers = Object.keys(tableData[0]);
+        this.headers = ["select", "compare", "name", "fieldA", "fieldB", "fieldC", "last updated"];//Object.keys(tableData[0]);
         
         this.generateTableHead();
         this.generateTable();
@@ -31,19 +31,6 @@ class crudTableViewer{
         let thead = this.table.createTHead();
         let row = thead.insertRow();
   
-  
-        //make the "select" header row
-        let th = document.createElement("th");
-        let text = document.createTextNode("select");
-        th.appendChild(text);
-        row.appendChild(th);
-  
-        //and the "compare" header row
-        let compth = document.createElement("th");
-        let compText = document.createTextNode("compare");
-        compth.appendChild(compText);
-        row.appendChild(compth);
-  
         //make a header row for each key
         for (let key of this.headers) {
             let th = document.createElement("th");
@@ -51,14 +38,41 @@ class crudTableViewer{
             th.appendChild(text);
             row.appendChild(th);
         }
-  
- 
     }
 
     
 
     generateTable() {
         var rowNum = 0
+        
+        //first we make the search row
+        let row = this.table.insertRow();
+        //starts hidden unless you click search button
+        row.hidden = true;
+        let cell = row.insertCell();
+        cell.colSpan=2;
+        let text = document.createElement('strong');
+        text.innerHTML = "SEARCH:"
+        //todo: actually center
+        cell.align="center"
+        cell.appendChild(text);
+        
+        //name search
+        var keys = ["name","fieldA","fieldB","fieldC"];
+        
+        for (let i=0;i<keys.length;i++) {
+        
+            let key = keys[i];
+            let cell = row.insertCell();
+            let input = document.createElement("input");
+            input.setAttribute("id", key+"=search");
+            input.setAttribute("type", "text");
+            function clickHandler() { tableViewer.search(input.value,key); }
+            input.addEventListener ("keyup", clickHandler ,false);	
+		    cell.appendChild(input);
+        }
+        
+        
         for (let element of this.tableData) {
             rowNum += 1;
             let row = this.table.insertRow();
@@ -129,6 +143,62 @@ class crudTableViewer{
         
     }
     
+    
+    subStrSearch(text,searchText) {
+        //returns position of substr, or -1 if not present
+        var pos = String(text).search(searchText);
+        if (pos > -1) {
+            return true
+        }
+        else {
+            return false
+        }
+    }
+    
+    showSearch() {
+        var tableElem = document.getElementById("crudTable");
+        var tableRows = tableElem.children[0].childNodes;
+        tableRows[1].hidden = !tableRows[1].hidden;
+
+    }
+    
+    search(searchText,key) {
+    
+        var tableElem = document.getElementById("crudTable");
+        var tableRows = tableElem.children[0].childNodes;
+        //start at 1 to not search the header row
+        
+        var hideNameList = [];
+        
+        
+        for (let i = 0; i < this.tableData.length; i++) {
+            var myEntry = this.tableData[i];
+            if (this.subStrSearch(myEntry[key],searchText) === false) {
+                hideNameList.push(myEntry.name);
+            }
+            
+            //the following code searches ALL keys
+            //var found = Object.values(myEntry).find(element => this.subStrSearch(element,searchText));
+            //if (found === undefined) {
+            //    hideNameList.push(myEntry.name);
+            //}
+        }
+
+        
+        //i=2 --> skip the header and search rows
+        for (let i = 2; i < tableRows.length; i++) {
+            var myRow = tableRows[i];
+            var myName = myRow.childNodes[2].childNodes[0].value
+            if (hideNameList.includes(myName)) {
+                myRow.hidden = true;
+            }
+            else {
+                myRow.hidden = false;
+            }
+        }
+
+        
+    }
 }
 
 
