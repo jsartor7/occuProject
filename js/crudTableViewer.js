@@ -176,24 +176,22 @@ class crudTableViewer{
         
         var hideNameList = [];
         
-        
         for (let i = 0; i < this.tableData.length; i++) {
             var myEntry = this.tableData[i];
             if (this.subStrSearch(myEntry[key],searchText) === false) {
                 hideNameList.push(myEntry.name);
             }
-            
-            //the following code searches ALL keys
-            //var found = Object.values(myEntry).find(element => this.subStrSearch(element,searchText));
-            //if (found === undefined) {
-            //    hideNameList.push(myEntry.name);
-            //}
         }
 
+        //hide rows not fitting the search
+        this.hideList(tableRows,hideNameList);
         
+    }
+    
+    hideList(rows,hideNameList) {
         //i=2 --> skip the header and search rows
-        for (let i = 2; i < tableRows.length; i++) {
-            var myRow = tableRows[i];
+        for (let i = 2; i < rows.length; i++) {
+            var myRow = rows[i];
             var myName = myRow.childNodes[2].childNodes[0].value
             if (hideNameList.includes(myName)) {
                 myRow.hidden = true;
@@ -202,8 +200,6 @@ class crudTableViewer{
                 myRow.hidden = false;
             }
         }
-
-        
     }
     
     compare() {
@@ -216,6 +212,8 @@ class crudTableViewer{
         var compareList = [];
         
         var numComparing = 0;
+        
+        //here we count the number of checkboxes compared, but also keep track of who we are going to hide/compare if it is the right number
         for (let i = 2; i < tableRows.length; i++) {
             
             var myRow = tableRows[i];
@@ -232,26 +230,17 @@ class crudTableViewer{
         //only compare sets of size 2
         if (numComparing == 2){
             
+            //hide the non-comparing guys
+            this.hideList(tableRows,hideNameList);
             
-            
-            
-            //i=2 --> skip the header and search rows
-            for (let i = 2; i < tableRows.length; i++) {
-                var myRow = tableRows[i];
-                var myName = myRow.childNodes[2].childNodes[0].value
-                if (hideNameList.includes(myName)) {
-                    myRow.hidden = true;
-                }
-                else {
-                    myRow.hidden = false;
-                }
-            }
-            
+            //now we do the actual comparison
             for (let i = 0; i < 2; i++) {
+                //j= 3-5 --> fieldA, fieldB, fieldC
                 for (let j = 3; j<6; j++) {
                     if (compareList[i].childNodes[j].childNodes[0].value == compareList[(i+1)%2].childNodes[j].childNodes[0].value) {
                     }
                     else {
+                        //mark the non-matches in red
                         compareList[i].childNodes[j].bgColor ="red";
                     }
                 }
