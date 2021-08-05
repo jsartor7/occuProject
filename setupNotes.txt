@@ -1,1 +1,10 @@
-I mostly wrote and tested on a linux server. Installed Apache and PHP as described here and it worked fine on Windows: https://www.sitepoint.com/how-to-install-php-on-windows/
+I mostly wrote and tested on a linux server. Installed Apache and PHP exactly as described here and it worked fine on Windows: https://www.sitepoint.com/how-to-install-php-on-windows/
+
+Also, in case you new to Apache (like me):
+
+open cmd
+navigate to C:\Apache24\bin
+'httpd' (starts the apache server)
+
+open browser
+navigate to localhost/occuProject/home.html
