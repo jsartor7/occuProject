@@ -1,0 +1,1 @@
+I mostly wrote and tested on a linux server. Installed Apache and PHP as described here and it worked fine on Windows: https://www.sitepoint.com/how-to-install-php-on-windows/
