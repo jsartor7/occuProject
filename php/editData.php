@@ -5,7 +5,11 @@
 
 // get all parameters from URL
 // $name $key $value
-parse_str($_SERVER['QUERY_STRING']);
+parse_str($_SERVER['QUERY_STRING'], $query);
+$name = $query['name']; 
+$key = $query['key'];
+$value = $query['value'];
+
 
 $filename="../data/page2data/tableData.txt";
 $tmpfilename="../data/page2data/tableData.tmp";
@@ -42,7 +46,7 @@ if (flock($lockFile, LOCK_EX)) {
                     $success = false;
                 }
                 elseif ($parts[0] == $name) {
-                    //the logic here is definitely confusing, but basically we only change the name if they were the same, but now they're not
+                    //the logic here is definitely confusing, but basically we only change the name if they were the same, but now theyre not
                     $parts[0] = $value;
                     $replaced = true;
                 }
@@ -68,7 +72,7 @@ if (flock($lockFile, LOCK_EX)) {
             if ($parts[0] == $name || ($key == "name" && $parts[0] == $value)) {
                 //update the updated time
                 $now = new DateTime('now', new DateTimeZone('Pacific/Honolulu'));
-                if (count($parts == 5)) {
+                if (count($parts) == 5) {
                     $parts[4] = $now->format('U');
                 }
                 else {
@@ -97,7 +101,7 @@ if (flock($lockFile, LOCK_EX)) {
     fclose($writing);
     
     
-    // might as well not overwrite the file if we didn't replace anything
+    // might as well not overwrite the file if we didnt replace anything
     if ($replaced && $success) 
     {
       rename($tmpfilename, $filename);

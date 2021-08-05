@@ -2,7 +2,11 @@
 
 // get all parameters from URL
 // $name, $fieldA, $fieldB, $fieldC
-parse_str($_SERVER['QUERY_STRING']);
+parse_str($_SERVER['QUERY_STRING'], $query);
+$name = $query['name']; 
+$fieldA = $query['fieldA'];
+$fieldB = $query['fieldB'];
+$fieldC = $query['fieldC'];
 
 
 $filename="../data/page2data/tableData.txt";

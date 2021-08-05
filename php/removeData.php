@@ -5,7 +5,8 @@
 
 // get all parameters from URL
 // $name
-parse_str($_SERVER['QUERY_STRING']);
+parse_str($_SERVER['QUERY_STRING'], $query);
+$name = $query['name']; 
 
 $filename="../data/page2data/tableData.txt";
 $tmpfilename="../data/page2data/tableData.tmp";
