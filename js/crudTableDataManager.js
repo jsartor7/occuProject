@@ -2,27 +2,48 @@
 class crudTableDataManager {
     
     constructor() {
-        //this.tableData = grabDataFromServer();
-        this.tableData = [
-            { name: "Monte", fieldA: 1658, fieldB: "Parco Foreste Casentinesi", fieldC: "10", "last updated": "10"   },
-            { name: "Falterona", fieldA: 1654, fieldB: "Parco Foreste Casentinesi", fieldC: "10", "last updated": "10"  },
-            { name: "Poggio", fieldA: 1520, fieldB: "Parco Foreste Casentinesi",   fieldC: "10", "last updated": "10"  },
-            { name: "Pratomagno", fieldA: 1592, fieldB: "Parco Foreste Casentinesi", fieldC: "10", "last updated": "10"  },
-            { name: "Amiata", fieldA: 1738, fieldB: "Siena", fieldC: "10", "last updated": "10" }
-        ];
+        this.grabDataFromServer();
     }
+    
+    updateTableData(serverText) {
+        
+        var tableData = [];
+        var rows = serverText.split("\n");
+    
+        for (let i = 0; i < rows.length; i++) {
+            var items = rows[i].split("|");
+            
+            var tempDict = {};
+            tempDict["name"] = items[0];
+            tempDict["fieldA"] = items[1];
+            tempDict["fieldB"] = items[2];
+            tempDict["fieldC"] = items[3];
+            tempDict["last updated"] = this.timeConverter(items[4]);
+            
+            tableData.push(tempDict);
+            
+        }
+        
+        this.tableData = tableData;
+        
+        tableViewer.refreshTableData();
+        tableViewer.redrawTable();
+
+    }
+    
     
     grabDataFromServer() {
         
-        //php
-        
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+             	tableManager.updateTableData(this.responseText.trim());
+        	}
+        };
+       	xmlhttp.open("GET", "../php/grabTableData.php", true);
+        xmlhttp.send();
     }
     
-    updateServer() {
-        
-        //php
-        
-    }
     
     getTimestamp() {
         let now = new Date();
@@ -49,19 +70,57 @@ class crudTableDataManager {
         return name
     }
     
+    
+    requestServerAddData(name,fieldA,fieldB,fieldC) {
+
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                if (this.responseText == "-1") {
+                    alert("adding failed");
+                }
+                else {
+                    var tempDict = {name: name, fieldA: fieldA, fieldB: fieldB, fieldC: fieldC, "last updated": tableManager.timeConverter(this.responseText.trim())};
+                    tableManager.tableData.push(tempDict);
+                    tableViewer.addRow(tempDict);
+
+    
+                }
+        	}
+        };
+       	xmlhttp.open("GET", "../php/addData.php?name="+name+"&fieldA="+fieldA+"&fieldB="+fieldB+"&fieldC="+fieldC, true);
+        xmlhttp.send();
+    }
+    
+    requestServerRemoveData(name) {
+
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                if (this.responseText.trim() == -1) {
+                    alert("unfortunately, something went wrong in trying to remove that!")
+                }
+                else {
+                    tableManager.grabDataFromServer();
+                    tableViewer.refreshTableData();
+                }
+        	}
+        };
+       	xmlhttp.open("GET", "../php/removeData.php?name="+name, true);
+        xmlhttp.send();
+    }
+    
+
     addNewRow() {
         // this is just silly stuff to prevent duplicate names while adding rows
-        name = "";
+        name = "name";
         if (this.tableData.filter(d => d.name == name).length > 0) {
             
             name = this.pickUnusedName("name");
            
         }
+        this.requestServerAddData(name,"","","")
         
-        
-        this.tableData.push({name: name, fieldA: "", fieldB: "", fieldC: "", "last updated": this.getTimestamp()})
-        tableViewer.refreshTableData();
-        this.updateServer();
 
     }
     
@@ -70,68 +129,90 @@ class crudTableDataManager {
         return this.tableData
     }
     
-    requestModifyElement(name,key,newValue) {
-        let success = true
-        if (key == "name") {
-            if (this.tableData.filter(d => d.name === newValue).length > 0) {
-                success = false
-                
-            }
-        }
-        
-        //this is admittedly a little bit lazy - i'm disallowing these characters so that i can use them as delimiters on the server without having to worry about escaping them
-        if ( newValue.includes("|") || newValue.includes("_") ) {
-            success = false
-        }
-        
-        if (success) {
-            //apply the now allowed change
-            let row = this.findRow(name);
-            row[0][key] = newValue;
-            row[0]["last updated"] = this.getTimestamp();
+
+    requestServerModifyElement(name,key,newValue) {
+        if (newValue.includes("&") || newValue.includes("|")) {
+            alert("Modification failed. Remember that names can not be duplicate, and the \"|\" and \"&\" characters are not allowed!")
             
-            //update server!
-            this.updateServer();
+            tableViewer.revertOrAssertCell("revert",name,key,-1);
         }
-        return success
+        else {
+            
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    //pieces is either name|key|value in event of success, or -1|name|key|value in event of failure. the >= is because sometimes the failure is caused by extra "|" characters
+                    var pieces = this.responseText.split("|")
+                    if (pieces.length >= 4) {
+                        alert("Modification failed. Remember that names can not be duplicate, and the \"|\" and \"&\& characters are not allowed!")
+                        tableViewer.revertOrAssertCell("revert",pieces[1],pieces[2],-1);
+                    }
+                    else {
+                        //this makes the cell's .data match the .value, for future revert opportunities
+                        tableViewer.revertOrAssertCell("assert",pieces[0].trim(),pieces[1].trim(),tableManager.timeConverter(pieces[2].trim()));
+                    }
+            	}
+            };
+           	xmlhttp.open("GET", "../php/editData.php?name="+name+"&key="+key+"&value="+newValue, true);
+            xmlhttp.send();
+        }
+        
     }
     
     deleteSelected() {
         var selectedNames = tableViewer.findSelectedNames();
         for (var name of selectedNames) {
-            let rowIndex = this.findRowIndex(name);
-            this.tableData.splice(rowIndex,1);
+            this.requestServerRemoveData(name);
         }
-        
-        tableViewer.refreshTableData();
-    
-        //update server!
-        this.updateServer();
     }
     
     copySelected() {
+        
+        
         var selectedNames = tableViewer.findSelectedNames();
         for (var name of selectedNames) {
             let sourceRow = this.findRow(name);
-            let rowIndex = this.findRowIndex(name);
-            let destinationRow = {};
-            destinationRow = Object.assign(destinationRow,sourceRow[0]);
-            destinationRow.name = this.pickUnusedName(sourceRow[0]["name"]);
-            destinationRow["last updated"] = this.getTimestamp();
-            this.tableData.splice(rowIndex+1,0,destinationRow);
+            this.requestServerAddData(this.pickUnusedName(sourceRow[0]["name"]),sourceRow[0]["fieldA"],sourceRow[0]["fieldB"],sourceRow[0]["fieldC"])
         }
         
-        tableViewer.refreshTableData();
-    
-        //update server!
-        this.updateServer();
+        
+        
+        //the old local version
+        
+        //var selectedNames = tableViewer.findSelectedNames();
+        //for (var name of selectedNames) {
+        //    let sourceRow = this.findRow(name);
+        //    let rowIndex = this.findRowIndex(name);
+            
+        //    let destinationRow = {};
+        //    destinationRow = Object.assign(destinationRow,sourceRow[0]);
+        //    destinationRow.name = this.pickUnusedName(sourceRow[0]["name"]);
+        //    destinationRow["last updated"] = this.getTimestamp();
+        //    this.tableData.splice(rowIndex+1,0,destinationRow);
+        //}
+        
+        //tableViewer.refreshTableData();
+
     }
     
+    
+    
+    //from https://stackoverflow.com/questions/847185/convert-a-unix-timestamp-to-time-in-javascript
+    timeConverter(UNIX_timestamp){
+        var a = new Date(UNIX_timestamp * 1000);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var year = a.getFullYear();
+        var month = months[a.getMonth()];
+        var date = a.getDate();
+        var hour = a.getHours();
+        var min = a.getMinutes();
+        var sec = a.getSeconds();
+        var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+        return time;
+    }
 }
 
 
-
-//var tableData = grabDataFromServer();
 
  
 

@@ -3,12 +3,10 @@ class crudTableViewer{
     constructor(tableData) {
         this.table = document.getElementById("crudTable");
         this.headers = 
-        this.tableData = tableData;
         this.headers = ["select", "compare", "name", "fieldA", "fieldB", "fieldC", "last updated"];//Object.keys(tableData[0]);
         
-        this.generateTableHead();
-        this.generateTable();
     }
+    
 
 
     redrawTable() {
@@ -19,7 +17,6 @@ class crudTableViewer{
     
     refreshTableData() {
         this.tableData = tableManager.requestTableData();
-        this.redrawTable();
     }
     
     clearTable() {
@@ -48,7 +45,7 @@ class crudTableViewer{
 
     generateTable() {
         var rowNum = 0
-        
+
         //first we make the search row
         let row = this.table.insertRow();
         //starts hidden unless you click search button
@@ -69,7 +66,7 @@ class crudTableViewer{
             let key = keys[i];
             let cell = row.insertCell();
             let input = document.createElement("input");
-            input.setAttribute("id", key+"=search");
+            input.setAttribute("id", i+"|search");
             input.setAttribute("type", "text");
             function clickHandler() { tableViewer.search(input.value,key); }
             input.addEventListener ("keyup", clickHandler ,false);	
@@ -78,52 +75,78 @@ class crudTableViewer{
         
         
         for (let element of this.tableData) {
-            rowNum += 1;
-            let row = this.table.insertRow();
-    
-            //make a checkbox
-            let cell = row.insertCell();
-            let checkbox = document.createElement("input");
-            checkbox.setAttribute("type", "checkbox");
-            checkbox.setAttribute("id", "select"+"="+rowNum);
-            cell.appendChild(checkbox);
-    
-            //make a checkbox
-            let compCell = row.insertCell();
-            let compCheckbox = document.createElement("input");
-            compCheckbox.setAttribute("type", "checkbox");
-            compCheckbox.setAttribute("id", "compare"+"="+rowNum);
-            function onClick() { tableViewer.compare(); }
-            compCheckbox.addEventListener('change', onClick, false);
-            compCell.appendChild(compCheckbox);
-            
-            //add in all the data
-            for (let key in element) {
-                let cell = row.insertCell();
-                let input = document.createElement("input");
-                input.setAttribute("type", "text");
-                input.value = element[key];
-                input.setAttribute("id", key+"="+rowNum);
-                if (key == "last updated") {
-                    input.disabled = true;
-                }
-                cell.appendChild(input);
-                input.onchange = function() { 
-                    let success = tableManager.requestModifyElement(element["name"],key,input.value)
-                    if (success == false) {
-                        alert("you may not make data with duplicate names or disallowed characters (| and _) !")
-                    }
-                    tableViewer.refreshTableData()
-
-                }
-
-            }
+            this.addRow(element)
     
 
     
         } 
     }
     
+    addRow(tableDataRow) {
+        var rowNum = this.table.rows.length+1;
+        let row = this.table.insertRow();
+    
+        //make a checkbox
+        let cell = row.insertCell();
+        let checkbox = document.createElement("input");
+        checkbox.setAttribute("type", "checkbox");
+        checkbox.setAttribute("id", "select"+"|"+rowNum);
+        cell.appendChild(checkbox);
+
+        //make a checkbox
+        let compCell = row.insertCell();
+        let compCheckbox = document.createElement("input");
+        compCheckbox.setAttribute("type", "checkbox");
+        compCheckbox.setAttribute("id", "compare"+"|"+rowNum);
+        function onClick() { tableViewer.compare(); }
+        compCheckbox.addEventListener('change', onClick, false);
+        compCell.appendChild(compCheckbox);
+        
+        //add in all the data
+        for (let key in tableDataRow) {
+            let cell = row.insertCell();
+            let input = document.createElement("input");
+            input.setAttribute("type", "text");
+            input.value = tableDataRow[key];
+            //we'll use this to see what it was before a change
+            input.data = tableDataRow[key];
+            input.setAttribute("id", key+"|"+rowNum);
+            if (key == "last updated") {
+                input.disabled = true;
+            }
+            cell.appendChild(input);
+            input.onchange = function() { 
+                if (this.data != this.value) {
+                    var rowName = this.parentNode.parentNode.childNodes[2].childNodes[0].data;
+                    tableManager.requestServerModifyElement(rowName,key,input.value)
+                }
+            }
+
+        }
+    }
+    
+    removeRow(name) {
+    
+        var tableElem = document.getElementById("crudTable");
+        var tableRows = tableElem.children[0].childNodes;
+        //start at 1 to not search the header row
+        
+        var removeNameList = [];
+        
+        for (let i = 2; i < rows.length; i++) {
+            var myRow = rows[i];
+            var myName = myRow.childNodes[2].childNodes[0].value
+            if (name == myName) {
+                myRow.remove();
+                
+            }
+        }
+
+
+        //hide rows not fitting the search
+        this.hideList(tableRows,hideNameList);
+        
+    }
     
     findSelectedNames() {
         var nameList = [];
@@ -136,19 +159,7 @@ class crudTableViewer{
         return nameList;
         
     }
-    
-    findCompareNames() {
-        var nameList = [];
-        var selectionList = document.querySelectorAll('[id^="select"]');
-        for (let i = 0; i < selectionList.length; i++) {
-            if (selectionList[i].checked) {
-                nameList.push(document.querySelectorAll('[id^="name"]')[i].value);
-            }
-        }
-        return nameList;
-        
-    }
-    
+
     
     subStrSearch(text,searchText) {
         //returns position of substr, or -1 if not present
@@ -168,6 +179,46 @@ class crudTableViewer{
 
     }
     
+    revertOrAssertCell(operation,name,key,lastUpdated) {
+    
+        var tableElem = document.getElementById("crudTable");
+        var tableRows = tableElem.children[0].childNodes;
+        //start at 1 to not search the header row
+        for (let i = 2; i < tableRows.length; i++) {
+            var myRow = tableRows[i];
+            name = name.trim()
+            var myName = myRow.childNodes[2].childNodes[0].data.trim();
+            
+            if (myName == name) {
+                if (key == "name") {
+                    var myCell = myRow.childNodes[2].childNodes[0];
+                }
+                else if (key == "fieldA") {
+                    var myCell = myRow.childNodes[3].childNodes[0];
+                }
+                else if (key == "fieldB") {
+                    var myCell = myRow.childNodes[4].childNodes[0];
+                }
+                else if (key == "fieldC") {
+                    var myCell = myRow.childNodes[5].childNodes[0];
+                }
+                
+                //either we're changing back to our old value
+                if (operation == "revert") {
+                    myCell.value = myCell.data;
+                }
+                else if (operation == "assert") {
+                    //or we are changing data to match the new value
+                    myCell.data = myCell.value;
+                    myRow.childNodes[6].childNodes[0].value = lastUpdated;
+                }
+                
+                //update the time!
+                    
+            }
+        }
+        
+    }
     search(searchText,key) {
     
         var tableElem = document.getElementById("crudTable");
@@ -203,7 +254,6 @@ class crudTableViewer{
     }
     
     compare() {
-    
         var tableElem = document.getElementById("crudTable");
         var tableRows = tableElem.children[0].childNodes;
         //start at 1 to not search the header row
@@ -234,6 +284,7 @@ class crudTableViewer{
             this.hideList(tableRows,hideNameList);
             
             //now we do the actual comparison
+            //i starts at 2 to skip header and search row
             for (let i = 0; i < 2; i++) {
                 //j= 3-5 --> fieldA, fieldB, fieldC
                 for (let j = 3; j<6; j++) {
@@ -264,7 +315,14 @@ class crudTableViewer{
             //OTOH, if the search bar *wasn't* hidden, you shouldn't unhide anything because it wasn't hidden on account of "comparing"
             if (tableRows[1].hidden) {
                 //you could obviously just unhide the rows, but then you'd have to unhighlight the red cells, which is mildly annoying because the bg colors alternate
-                this.redrawTable()
+                for (let i = 2; i < tableRows.length; i++) {
+                    //only redraw if someone was hidden
+                    if (tableRows[i].hidden) {
+                        this.refreshTableData();
+                        this.redrawTable();
+                        break;
+                    }
+                }
             }
         }
         
