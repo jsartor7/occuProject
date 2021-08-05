@@ -1,0 +1,4 @@
+name1|fieldA12|fieldB1|fieldC3|1628149853
+name2|fieldA1asdddd|fieldB2|fieldC1|1628150839
+asdasd|saidfjad%^*af\sdf|asdfa(){}[]sdf|fieldC1|1628150873
+12341234|12341234|12341234|1234324|1628150854
