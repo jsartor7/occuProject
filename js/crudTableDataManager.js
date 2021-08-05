@@ -141,15 +141,22 @@ class crudTableDataManager {
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    //pieces is either name|key|value in event of success, or -1|name|key|value in event of failure. the >= is because sometimes the failure is caused by extra "|" characters
+                    //pieces is either name|key|value|time in event of success, or -1|name|key|value|time in event of failure. the >= is because sometimes the failure is caused by extra "|" characters
                     var pieces = this.responseText.split("|")
-                    if (pieces.length >= 4) {
+                    if (pieces.length >= 5) {
                         alert("Modification failed. Remember that names can not be duplicate, and the \"|\" and \"&\& characters are not allowed!")
                         tableViewer.revertOrAssertCell("revert",pieces[1],pieces[2],-1);
                     }
                     else {
                         //this makes the cell's .data match the .value, for future revert opportunities
-                        tableViewer.revertOrAssertCell("assert",pieces[0].trim(),pieces[1].trim(),tableManager.timeConverter(pieces[2].trim()));
+			//in retrospect, it would probably have made more sense to use tableManager.tableData instead of each element's .data property, now we have to update both and mistakes could lead to weird mismatches
+			var name = pieces[0].trim();
+			var key = pieces[1].trim();
+			var newValue = pieces[2].trim();
+			var lastUpdated = pieces[3].trim();
+                        tableViewer.revertOrAssertCell("assert",name,key,tableManager.timeConverter(lastUpdated));
+			var row = tableManager.findRow(name)[0];
+			row[key] = newValue;
                     }
             	}
             };

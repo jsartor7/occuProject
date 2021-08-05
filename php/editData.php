@@ -122,6 +122,6 @@ if (!$success) {
     $returnTxt .= "-1|";
 }
 
-$returnTxt .= rtrim($name) . "|" . $key . "|" . $now->format('U');
+$returnTxt .= rtrim($name) . "|" . $key . "|" . $value . "|". $now->format('U');
 echo $returnTxt;
 ?>
